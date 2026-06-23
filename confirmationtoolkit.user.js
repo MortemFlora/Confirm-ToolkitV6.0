@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Confirmation Text Toolkit 5.2
+// @name         Confirmation Text Toolkit 6.0
 // @namespace    http://tampermonkey.net/
-// @version      5.2.0
-// @description  Date/time regex fixes, emoji-safe copy, SMS Safe toggle.
+// @version      6.0.0
+// @description  Date/time regex fixes, emoji-safe copy, SMS Safe toggle, Dracula theme.
 // @author       James (maintained by RBA Central NJ)
 // @updateURL    https://raw.githubusercontent.com/MortemFlora/Confirm-ToolkitV6.0/main/confirmationtoolkit.user.js
 // @downloadURL  https://raw.githubusercontent.com/MortemFlora/Confirm-ToolkitV6.0/main/confirmationtoolkit.user.js
@@ -23,7 +23,7 @@
 
 (function () {
   'use strict';
-  console.log('✅ Toolkit v5.2.0 Loading…');
+  console.log('✅ Toolkit v6.0.0 Loading…');
 
   const FEEDBACK_FORM_URL   = 'https://app.tinypulse.com';
   const MANAGER_MESSAGE_URL = 'https://gist.githubusercontent.com/ConfirmationMGR/423dcb2729326738bd4f1e8df1754701/raw/manager-message.json';
@@ -127,6 +127,11 @@
       radius:14, font:'Inter, Segoe UI, system-ui, sans-serif',
       light:{headerBg:'#B26CE0',headerTx:'#FFFFFF',mainBg:'#FCFAFF',sectionBg:'#FFFFFF',sectionTx:'#271B33',textBg:'#F2E9FF',border:'#DCCBFA',text:'#271B33',buttonBg:'#FFCF99',buttonTx:'#2A1B00',footerBg:'#F2E9FF',footerTx:'#271B33',accentHd:'#B26CE0',accentBg:'#F7F0FF',accentTx:'#FFFFFF',accentRing:'#B26CE0',glow:'#C798F1'},
       dark :{headerBg:'#7E52A3',headerTx:'#F7F1FF',mainBg:'#1B1423',sectionBg:'#241B2E',sectionTx:'#F7F1FF',textBg:'#2B2038',border:'#9B84C7',text:'#F1E9FF',buttonBg:'#FFC78B',buttonTx:'#2A1B00',footerBg:'#211933',footerTx:'#F7F1FF',accentHd:'#B28FD9',accentBg:'#281F38',accentTx:'#F0E9FF',accentRing:'#B28FD9',glow:'#BFA6EA'}
+    },
+    dracula:{
+      radius:14, font:'Inter, Segoe UI, system-ui, sans-serif',
+      light:{headerBg:'#644AC9',headerTx:'#FFFBEB',mainBg:'#FFFBEB',sectionBg:'#FFFFFF',sectionTx:'#1F1F1F',textBg:'#F3EFFD',border:'#D5CFEF',text:'#1F1F1F',buttonBg:'#E7E2FA',buttonTx:'#1F1F1F',footerBg:'#F1EDFB',footerTx:'#1F1F1F',accentHd:'#644AC9',accentBg:'#F3EFFD',accentTx:'#FFFFFF',accentRing:'#644AC9',glow:'#A3144D'},
+      dark :{headerBg:'#bd93f9',headerTx:'#282a36',mainBg:'#282a36',sectionBg:'#343746',sectionTx:'#f8f8f2',textBg:'#21222c',border:'#44475a',text:'#f8f8f2',buttonBg:'#44475a',buttonTx:'#f8f8f2',footerBg:'#21222c',footerTx:'#f8f8f2',accentHd:'#bd93f9',accentBg:'#343746',accentTx:'#f8f8f2',accentRing:'#bd93f9',glow:'#ff79c6'}
     }
   };
   const activeTheme=()=>{const t=THEMES[themeName]||THEMES.enabled;return {...(themeMode==='dark'?t.dark:t.light),radius:t.radius,font:t.font};};
@@ -525,7 +530,7 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
       if(parts.length>=2){ const fullName=parts[1]; userName=(fullName.split(' ')[0]||''); const h=new Date().getHours(); greeting=h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening'; }
     }
     header.innerHTML=`
-      <div style="font-weight:900;">Confirmation Toolkit 5.2 • ${storeName}</div>
+      <div style="font-weight:900;">Confirmation Toolkit 6.0 • ${storeName}</div>
       ${userName?`<div style="margin-top:4px;font-size:${fs.label}px;font-weight:700;opacity:.95;">${greeting}, ${userName}!</div>`:''}
       <span class="ctk-close" title="Close">✕</span>`;
     popup.appendChild(header);
@@ -561,6 +566,7 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
           <button class="ctk-btn ${themeName==='evergreen'?'active':''}"data-theme="evergreen">Evergreen</button>
           <button class="ctk-btn ${themeName==='ocean'?'active':''}"    data-theme="ocean">Ocean</button>
           <button class="ctk-btn ${themeName==='plum'?'active':''}"     data-theme="plum">Plum</button>
+          <button class="ctk-btn ${themeName==='dracula'?'active':''}"  data-theme="dracula">Dracula</button>
         </div>
       </div>
 
@@ -698,6 +704,7 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
       evergreen:['#2E7D32','#16A34A','#65A30D','#059669','#84CC16','#34D399'],
       ocean:['#0277BD','#3AA0FF','#22D3EE','#60A5FA','#06B6D4','#0EA5E9'],
       plum:['#B26CE0','#7C3AED','#EF4444','#F59E0B','#22C55E','#60A5FA'],
+      dracula:['#bd93f9','#ff79c6','#8be9fd','#50fa7b','#ffb86c','#ff5555'],
       rba:['#5C9443','#79AE5E','#22C55E','#84CC16','#06B6D4','#F59E0B'],
       enabled:[BRAND_BLUE, BRAND_RED, '#0E7A0D', '#84CC16', '#0284C7', BRAND_YELLOW],
       win98:['#000080','#008080','#800000','#808000','#4B0082','#2F4F4F']
