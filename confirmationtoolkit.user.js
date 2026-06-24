@@ -405,7 +405,7 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
         position:fixed;left:${localStorage.getItem('ctk_left')||'30px'};top:${localStorage.getItem('ctk_top')||'80px'};
         width:${width};background:${th.mainBg};border:1px solid ${th.border};border-radius:${th.radius}px;
         box-shadow:0 12px 30px rgba(0,0,0,.22);font-family:${th.font};color:${th.text};
-        z-index:999999;display:flex;flex-direction:column;overflow:hidden;transform:scale(var(--scale));transform-origin:top left;
+        z-index:999999;display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - 16px);transform:scale(var(--scale));transform-origin:top left;
       }
       .ctk-popup, .ctk-popup *{box-sizing:border-box}
 
@@ -446,10 +446,10 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
 
       .ctk-settings-toggle{padding:${pad}px ${pad+2}px;background:${th.textBg};border-top:1px solid ${th.border};border-bottom:1px solid ${th.border};
         cursor:pointer;font-size:${fs.label}px;font-weight:800;color:${th.text};display:flex;justify-content:space-between;align-items:center;}
-      .ctk-settings{display:${settingsVisible?'block':'none'};padding:${pad2}px ${pad2+2}px;background:${th.textBg};border-bottom:1px solid ${th.border};}
+      .ctk-settings{display:${settingsVisible?'block':'none'};flex:2 1 auto;min-height:0;overflow-y:auto;padding:${pad2}px ${pad2+2}px;background:${th.textBg};border-bottom:1px solid ${th.border};}
 
-      .ctk-body{flex:1;background:${th.mainBg};overflow-x:hidden;}
-      .ctk-body.scroll{max-height:60vh;overflow-y:auto;}
+      .ctk-body{flex:1 1 auto;min-height:0;background:${th.mainBg};overflow-x:hidden;overflow-y:auto;}
+      .ctk-body.scroll{overflow-y:auto;}
 
       .ctk-group{margin:12px 0}
       .ctk-group-title{font-weight:900;margin:0 0 8px 0;font-size:${fs.label}px;text-transform:uppercase;letter-spacing:.3px}
