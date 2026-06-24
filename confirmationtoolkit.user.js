@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Confirmation Text Toolkit 6.0
+// @name         Confirmation Text Toolkit 6.1
 // @namespace    http://tampermonkey.net/
-// @version      6.0.0
-// @description  Date/time regex fixes, emoji-safe copy, SMS Safe toggle, Dracula theme.
+// @version      6.1.0
+// @description  Date/time regex fixes, emoji-safe copy, SMS Safe toggle, Dracula theme, draggable launcher + free resize.
 // @author       James (maintained by RBA Central NJ)
 // @updateURL    https://raw.githubusercontent.com/MortemFlora/Confirm-ToolkitV6.0/main/confirmationtoolkit.user.js
 // @downloadURL  https://raw.githubusercontent.com/MortemFlora/Confirm-ToolkitV6.0/main/confirmationtoolkit.user.js
@@ -23,7 +23,7 @@
 
 (function () {
   'use strict';
-  console.log('✅ Toolkit v6.0.0 Loading…');
+  console.log('✅ Toolkit v6.1.0 Loading…');
 
   const FEEDBACK_FORM_URL   = 'https://app.tinypulse.com';
   const MANAGER_MESSAGE_URL = 'https://gist.githubusercontent.com/ConfirmationMGR/423dcb2729326738bd4f1e8df1754701/raw/manager-message.json';
@@ -378,6 +378,11 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
   // -------------- UI --------------
   function showToolkit(messages, storeName){
     const existing=document.querySelector('.ctk-popup'); if(existing) existing.remove();
+    // v6.1 — toolkit is open now: remember state + hide the launcher button
+    localStorage.setItem('ctk_open','true');
+    const _fab=document.querySelector('.ctk-fab'); if(_fab) _fab.style.display='none';
+    const savedW=localStorage.getItem('ctk_w')||'';
+    const savedH=localStorage.getItem('ctk_h')||'';
     const th=activeTheme();
     const neonGlow = themeName==='neon' ? `, 0 0 14px ${th.glow}AA, 0 0 26px ${th.glow}80, 0 0 42px ${th.glow}4D` : '';
     const strongRing = th.accentRing;
@@ -502,6 +507,18 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
       }
       .ctk-resize:hover{transform:scale(1.06);}
 
+      /* v6.1 — free resize handles on every edge + corner */
+      .ctk-rh{position:absolute;z-index:8;}
+      .ctk-rh-n{top:-3px;left:10px;right:10px;height:7px;cursor:ns-resize;}
+      .ctk-rh-s{bottom:-3px;left:10px;right:10px;height:7px;cursor:ns-resize;}
+      .ctk-rh-e{right:-3px;top:10px;bottom:10px;width:7px;cursor:ew-resize;}
+      .ctk-rh-w{left:-3px;top:10px;bottom:10px;width:7px;cursor:ew-resize;}
+      .ctk-rh-ne{top:-4px;right:-4px;width:14px;height:14px;cursor:nesw-resize;}
+      .ctk-rh-nw{top:-4px;left:-4px;width:14px;height:14px;cursor:nwse-resize;}
+      .ctk-rh-sw{bottom:-4px;left:-4px;width:14px;height:14px;cursor:nesw-resize;}
+      .ctk-rh-se{bottom:0;right:0;width:18px;height:18px;cursor:nwse-resize;}
+      .ctk-rh-se::before{content:"";position:absolute;inset:5px 5px auto auto;width:11px;height:11px;background:repeating-linear-gradient(135deg,${th.border} 0 2px,transparent 2px 4px);clip-path:polygon(100% 0,0 100%,100% 100%);opacity:.85;}
+
       /* v5.1 — TBD date warning badge */
       .ctk-tbd-warn{
         margin:8px 12px 0 12px;padding:6px 10px;
@@ -512,6 +529,8 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
     document.head.appendChild(style);
 
     const popup=document.createElement('div'); popup.className='ctk-popup';
+    if(savedW) popup.style.width=savedW;
+    if(savedH) popup.style.height=savedH;
 
     const setScale=(s)=>{
       scale = clamp(parseFloat(s||1), MIN_SCALE, MAX_SCALE);
@@ -530,11 +549,11 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
       if(parts.length>=2){ const fullName=parts[1]; userName=(fullName.split(' ')[0]||''); const h=new Date().getHours(); greeting=h<12?'Good Morning':h<17?'Good Afternoon':'Good Evening'; }
     }
     header.innerHTML=`
-      <div style="font-weight:900;">Confirmation Toolkit 6.0 • ${storeName}</div>
+      <div style="font-weight:900;">Confirmation Toolkit 6.1 • ${storeName}</div>
       ${userName?`<div style="margin-top:4px;font-size:${fs.label}px;font-weight:700;opacity:.95;">${greeting}, ${userName}!</div>`:''}
       <span class="ctk-close" title="Close">✕</span>`;
     popup.appendChild(header);
-    header.querySelector('.ctk-close').onclick=()=>{ if(messageTimer) clearInterval(messageTimer); popup.remove(); };
+    header.querySelector('.ctk-close').onclick=()=>{ if(messageTimer) clearInterval(messageTimer); localStorage.setItem('ctk_open','false'); popup.remove(); const f=document.querySelector('.ctk-fab'); if(f){ f.style.display='flex'; } else { showFab(messages,storeName); } };
     header.addEventListener('mouseup',()=>{ document.querySelectorAll('.ctk-btn').forEach(b=>b.classList.remove('active')); });
 
     // Settings toggle
@@ -743,18 +762,40 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
     document.addEventListener('mousemove',(e)=>{ if(!dragging) return; const r=popup.getBoundingClientRect(); const left=Math.max(0,Math.min(e.clientX-offsetX,window.innerWidth-r.width)); const top=Math.max(0,Math.min(e.clientY-offsetY,window.innerHeight-r.height)); popup.style.left=left+'px'; popup.style.top=top+'px'; localStorage.setItem('ctk_left',left+'px'); localStorage.setItem('ctk_top',top+'px'); });
     document.addEventListener('mouseup',()=>{ dragging=false; header.style.cursor='grab'; });
 
-    // Corner scale handle
-    const res=document.createElement('div'); res.className='ctk-resize';
-    let scaling=false, startScale=scale, startX=0, startY=0;
-    res.addEventListener('mousedown',(e)=>{ e.stopPropagation(); scaling=true; startScale=scale; startX=e.clientX; startY=e.clientY; document.body.style.userSelect='none'; });
-    document.addEventListener('mousemove',(e)=>{
-      if(!scaling) return;
-      const dx=e.clientX-startX; const dy=e.clientY-startY;
-      const delta=(Math.max(dx,dy))/240;
-      setScale(startScale+delta);
+    // v6.1 — free resize from any edge or corner (replaces the old scale-only grip)
+    const RH=[['n',{n:1}],['s',{s:1}],['e',{e:1}],['w',{w:1}],['ne',{n:1,e:1}],['nw',{n:1,w:1}],['sw',{s:1,w:1}],['se',{s:1,e:1}]];
+    let rz=null;
+    RH.forEach(([name,dirs])=>{
+      const h=document.createElement('div'); h.className='ctk-rh ctk-rh-'+name; popup.appendChild(h);
+      h.addEventListener('mousedown',(e)=>{
+        e.preventDefault(); e.stopPropagation();
+        const cs=getComputedStyle(popup);
+        rz={dirs, sx:e.clientX, sy:e.clientY, sw:parseFloat(cs.width), sh:parseFloat(cs.height), sl:parseFloat(cs.left), st:parseFloat(cs.top), s:clamp(scale,MIN_SCALE,MAX_SCALE)};
+        document.body.style.userSelect='none';
+      });
     });
-    document.addEventListener('mouseup',()=>{ if(scaling){ scaling=false; document.body.style.userSelect=''; }});
-    popup.appendChild(res);
+    document.addEventListener('mousemove',(e)=>{
+      if(!rz) return;
+      const dx=e.clientX-rz.sx, dy=e.clientY-rz.sy;
+      let w=rz.sw, h=rz.sh;
+      if(rz.dirs.e) w=rz.sw+dx/rz.s;
+      if(rz.dirs.w) w=rz.sw-dx/rz.s;
+      if(rz.dirs.s) h=rz.sh+dy/rz.s;
+      if(rz.dirs.n) h=rz.sh-dy/rz.s;
+      w=Math.max(240,w); h=Math.max(180,h);
+      popup.style.width=w+'px'; popup.style.height=h+'px';
+      if(rz.dirs.w) popup.style.left=(rz.sl+(rz.sw-w)*rz.s)+'px';
+      if(rz.dirs.n) popup.style.top =(rz.st+(rz.sh-h)*rz.s)+'px';
+      body.style.flex='1'; body.style.minHeight='0'; body.style.overflowY='auto';
+    });
+    document.addEventListener('mouseup',()=>{
+      if(!rz) return;
+      if(popup.style.width)  localStorage.setItem('ctk_w', parseFloat(popup.style.width)+'px');
+      if(popup.style.height) localStorage.setItem('ctk_h', parseFloat(popup.style.height)+'px');
+      if(popup.style.left)   localStorage.setItem('ctk_left', popup.style.left);
+      if(popup.style.top)    localStorage.setItem('ctk_top', popup.style.top);
+      rz=null; document.body.style.userSelect='';
+    });
 
     document.body.appendChild(popup);
     setScale(scale);
@@ -764,6 +805,7 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
     messageTimer=setInterval(updateMessage,MESSAGE_REFRESH_MS);
 
     function setScrollMode(){
+      if (savedH){ body.style.flex='1'; body.style.minHeight='0'; body.style.overflowY='auto'; body.classList.remove('scroll'); return; }
       const collapsed = !settingsVisible && !sectionsExpanded;
       if (collapsed) { body.classList.remove('scroll'); }
       else { body.classList.add('scroll'); }
@@ -771,18 +813,44 @@ NOTE: Replying STOP will only unsubscribe you from text messages, it will not ca
     setScrollMode();
   }
 
+  // -------------- launcher button (v6.1) --------------
+  function showFab(messages, storeName){
+    if(document.querySelector('.ctk-fab')) return;
+    const th=activeTheme();
+    const fab=document.createElement('div'); fab.className='ctk-fab'; fab.title='Open Confirmation Toolkit';
+    fab.style.cssText='position:fixed;left:'+(localStorage.getItem('ctk_fab_left')||'24px')+';top:'+(localStorage.getItem('ctk_fab_top')||'120px')+';width:54px;height:54px;border-radius:50%;background:'+th.headerBg+';color:'+th.headerTx+';display:'+(localStorage.getItem('ctk_open')==='true'?'none':'flex')+';align-items:center;justify-content:center;cursor:grab;z-index:999998;box-shadow:0 6px 18px rgba(0,0,0,.30);border:2px solid '+th.headerTx+';user-select:none;';
+    fab.innerHTML='<span style="font-size:24px;line-height:1;">&#128172;</span>';
+    let down=false, moved=false, ox=0, oy=0, dsx=0, dsy=0;
+    fab.addEventListener('mousedown',(e)=>{ down=true; moved=false; dsx=e.clientX; dsy=e.clientY; const r=fab.getBoundingClientRect(); ox=e.clientX-r.left; oy=e.clientY-r.top; e.preventDefault(); fab.style.cursor='grabbing'; });
+    document.addEventListener('mousemove',(e)=>{
+      if(!down) return;
+      if(Math.abs(e.clientX-dsx)+Math.abs(e.clientY-dsy)>4) moved=true;
+      const left=clamp(e.clientX-ox,0,window.innerWidth-fab.offsetWidth);
+      const top =clamp(e.clientY-oy,0,window.innerHeight-fab.offsetHeight);
+      fab.style.left=left+'px'; fab.style.top=top+'px';
+      localStorage.setItem('ctk_fab_left',left+'px'); localStorage.setItem('ctk_fab_top',top+'px');
+    });
+    document.addEventListener('mouseup',()=>{ if(down){ down=false; fab.style.cursor='grab'; } });
+    fab.addEventListener('click',()=>{ if(moved){ moved=false; return; } showToolkit(messages,storeName); });
+    document.body.appendChild(fab);
+  }
+
   // -------------- boot --------------
   function ready(){return !!(document.querySelector('#leadinformation')||document.querySelector('#historydatadiv')||document.querySelector('#scriptdiv')); }
+  let booted=false;
   function boot(){
+    if(booted) return true;
     if(!ready()) return false;
+    booted=true;
     watchStoreLabel();
     const data=collectLeadData();
     const built=buildMessages(data);
-    showToolkit(built.messages,built.storeName);
+    showFab(built.messages,built.storeName);
+    if(localStorage.getItem('ctk_open')==='true') showToolkit(built.messages,built.storeName);
     return true;
   }
   const observer=new MutationObserver(()=>{ if(boot()) observer.disconnect(); });
   observer.observe(document.body,{childList:true,subtree:true});
   setTimeout(boot,1500);
-  setTimeout(()=>{ if(!document.querySelector('.ctk-popup')) boot(); },4000);
+  setTimeout(()=>{ if(!booted) boot(); },4000);
 })();
